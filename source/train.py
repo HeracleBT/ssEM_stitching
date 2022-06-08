@@ -138,19 +138,6 @@ if not test_flag:
                 left_align = left_align_level[-i]
                 right_align = right_align_level[-i]
 
-                # x_u = torch.min(torch.nonzero(raw_mask_cut[0, 0, :, :]), dim=0)[0][0]
-                # y_l = torch.min(torch.nonzero(raw_mask_cut[0, 0, :, :]), dim=0)[0][1]
-                # x_d = torch.max(torch.nonzero(raw_mask_cut[0, 0, :, :]), dim=0)[0][0]
-                # y_r = torch.max(torch.nonzero(raw_mask_cut[0, 0, :, :]), dim=0)[0][1]
-                # raw_cut = raw_cut[:, :, x_u:x_d, y_l:y_r]
-                # raw_mask_overlap = mask_overlap[:, :, x_u:x_d, y_l:y_r]
-                # t_x_u = torch.min(torch.nonzero(transformed_mask_cut[0, 0, :, :]), dim=0)[0][0]
-                # t_y_l = torch.min(torch.nonzero(transformed_mask_cut[0, 0, :, :]), dim=0)[0][1]
-                # t_x_d = torch.max(torch.nonzero(transformed_mask_cut[0, 0, :, :]), dim=0)[0][0]
-                # t_y_r = torch.max(torch.nonzero(transformed_mask_cut[0, 0, :, :]), dim=0)[0][1]
-                # transformed_cut = transformed_cut[:, :, t_x_u:t_x_d, t_y_l:t_y_r]
-                # transformed_mask_overlap = mask_overlap[:, :, t_x_u:t_x_d, t_y_l:t_y_r]
-
                 left_up_align = F.interpolate(left_align, transformed_cut.shape[2:],
                                               mode='nearest') if i != -level_num - 1 else left_align
                 right_up_align = F.interpolate(right_align, raw_cut.shape[2:],
@@ -234,41 +221,7 @@ if not test_flag:
 
 else:
 
-    # test_dir = 'test'
-    # raw_path = "%s/%s/raw_left.mrc" % (data_dir, test_dir)
-    # deformed_path = "%s/%s/deformed_right.mrc" % (data_dir, test_dir)
-    # deformed_mask = "%s/%s/mask_right.mrc" % (data_dir, test_dir)
-    #
-    # model_dir = "%s/Overlap_prealign_%d/%d/net_params_%d.pkl" % (model_dir, level_num, level_num + 1, 20)
-    # model.load_state_dict(torch.load(model_dir))
-    # # model = model.to(device)
-    # with mrcfile.open(raw_path) as mrc:
-    #     raw_data = mrc.data
-    #     raw_data = raw_data.reshape(-1, 1024, 1024)
-    #     raw_data = standardize_numpy(raw_data)
-    # with mrcfile.open(deformed_path) as mrc:
-    #     deformed_data = mrc.data
-    #     deformed_data = deformed_data.reshape(-1, 1024, 1024)
-    #     deformed_data = standardize_numpy(deformed_data)
-    # with mrcfile.open(deformed_mask) as mrc:
-    #     deformed_mask = mrc.data
-    # img_size = raw_data.shape[1:]
-    # index = 10
-    #
-    # # cv2.imshow("raw_img", normalize_img(raw_data[index]))
-    # # cv2.imshow("transformed_img", normalize_img(deformed_data[index]))
-    # # cv2.imshow("transformed_mask", deformed_mask[index])
-    #
-    # model.eval()
-    # raw_img = raw_data[index]
-    # transformed_img = deformed_data[index]
-    # transformed_mask_img = deformed_mask[index]
-    # raw_mask_img = np.zeros((1024, 1024))
-    # raw_mask_img[300: 812, 300: 812] = 1
-
-    # test_dir = 'test/real_2'
-    test_dir = '333/3/temp_2'
-    # test_dir = 'test/10'
+    test_dir = 'test'
     raw_path = "%s/%s/raw_left.png" % (data_dir, test_dir)
     deformed_path = "%s/%s/deformed_right.png" % (data_dir, test_dir)
     raw_mask = "%s/%s/mask_left.png" % (data_dir, test_dir)
@@ -286,16 +239,6 @@ else:
 
     transformed_mask_img = np.where(transformed_mask_img > 0, 1.0, 0)
     raw_mask_img = np.where(raw_mask_img > 0, 1.0, 0)
-
-    # raw_left_noised = raw_img + np.random.normal(0.0, 20.0, (1024, 1024))
-    # raw_left_noised = np.where(raw_left_noised > 255.0, 255.0, raw_left_noised)
-    # raw_left_noised = np.where(raw_left_noised < 0.0, 0.0, raw_left_noised)
-    # raw_left_noised = raw_left_noised * raw_mask_img
-    # raw_cut, transformed_cut, raw_mask_cut, transformed_mask_cut, mask_super, mask_overlap = pre_process(raw_left_noised,
-    #                                                                                                      transformed_img,
-    #                                                                                                      raw_mask_img,
-    #                                                                                                      transformed_mask_img)
-    # cv2.imshow("raw_noised", np.uint8(raw_left_noised))
 
     raw_cut, transformed_cut, raw_mask_cut, transformed_mask_cut, mask_super, mask_overlap = pre_process(raw_img,
                                                                                                          transformed_img,
@@ -442,15 +385,10 @@ else:
     mask_overlap = np.squeeze(mask_overlap)
     x_map = np.sum(mask_overlap, axis=1)
     y_map = np.sum(mask_overlap, axis=0)
-    # y_l = min(np.argwhere(y_map >= 1.0))[0]
-    # y_r = max(np.argwhere(y_map >= 1.0))[0]
-    # x_u = min(np.argwhere(x_map >= 1.0))[0]
-    # x_d = max(np.argwhere(x_map >= 1.0))[0]
-
-    x_u = 763
-    x_d = x_u + 58
-    y_l = 1428
-    y_r = y_l + 36
+    y_l = min(np.argwhere(y_map >= 1.0))[0]
+    y_r = max(np.argwhere(y_map >= 1.0))[0]
+    x_u = min(np.argwhere(x_map >= 1.0))[0]
+    x_d = max(np.argwhere(x_map >= 1.0))[0]
 
     print(window_NCC(left_deformed_data[:, :, x_u: x_d, y_l: y_r], right_deformed_data[:, :, x_u: x_d, y_l: y_r],
                      (1, 35, 35)).data)
