@@ -49,29 +49,37 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 device = torch.device("cuda:0")
 
-raw_path = "%s/%s/raw_left.mrc" % (data_dir, train_dir)
-deformed_path = "%s/%s/deformed_right.mrc" % (data_dir, train_dir)
-deformed_mask = "%s/%s/mask_right.mrc" % (data_dir, train_dir)
-
 model = DualOverlap(level_num)
-# model = nn.DataParallel(model)
 # model = model.to(device)
 
 test_dir = 'test'
-raw_path = "%s/%s/raw_left.png" % (data_dir, test_dir)
-deformed_path = "%s/%s/deformed_right.png" % (data_dir, test_dir)
-raw_mask = "%s/%s/mask_left.png" % (data_dir, test_dir)
-deformed_mask = "%s/%s/mask_right.png" % (data_dir, test_dir)
-model_dir = "%s/Overlap_prealign_new_%d/%d/net_params_%d.pkl" % (model_dir, level_num, level_num + 1, 20)
-# model_dir = "%s/Overlap_prealign_%d/%d/net_params_%d.pkl" % (model_dir, level_num, level_num + 1, 25)
+raw_path = "%s/%s/raw_left.mrc" % (data_dir, test_dir)
+deformed_path = "%s/%s/deformed_right.mrc" % (data_dir, test_dir)
+deformed_mask = "%s/%s/mask_right.mrc" % (data_dir, test_dir)
+
+model_dir = "%s/Overlap_prealign_%d/%d/net_params_%d.pkl" % (model_dir, level_num, level_num + 1, 20)
 model.load_state_dict(torch.load(model_dir))
 # model = model.to(device)
 model.eval()
 
-raw_img = cv2.imread(raw_path, cv2.IMREAD_GRAYSCALE)
-transformed_img = cv2.imread(deformed_path, cv2.IMREAD_GRAYSCALE)
-transformed_mask_img = cv2.imread(deformed_mask, cv2.IMREAD_GRAYSCALE)
-raw_mask_img = cv2.imread(raw_mask, cv2.IMREAD_GRAYSCALE)
+with mrcfile.open(raw_path) as mrc:
+    raw_data = mrc.data
+    raw_data = raw_data.reshape(-1, 1024, 1024)
+    raw_data = standardize_numpy(raw_data)
+with mrcfile.open(deformed_path) as mrc:
+    deformed_data = mrc.data
+    deformed_data = deformed_data.reshape(-1, 1024, 1024)
+    deformed_data = standardize_numpy(deformed_data)
+with mrcfile.open(deformed_mask) as mrc:
+    deformed_mask = mrc.data
+img_size = raw_data.shape[1:]
+index = 0
+
+raw_img = raw_data[index]
+transformed_img = deformed_data[index]
+transformed_mask_img = deformed_mask[index]
+raw_mask_img = np.zeros((1024, 1024))
+raw_mask_img[300: 812, 300: 812] = 1
 
 transformed_mask_img = np.where(transformed_mask_img > 0, 1.0, 0)
 raw_mask_img = np.where(raw_mask_img > 0, 1.0, 0)
